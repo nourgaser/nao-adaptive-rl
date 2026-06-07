@@ -5,7 +5,7 @@ humanoid. Course project for the *Interactive & Social AI for Humanoid Robots*
 seminar (GIU, SS 2026) --- Topic 6 / Track 8: Learning, Personalization &
 Adaptation in HRI.
 
-**Authors:** Nour Gaser, Eman
+**Authors:** Nour Gaser, Eman Saleh
 
 ---
 

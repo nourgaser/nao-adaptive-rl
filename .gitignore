@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -8,3 +9,26 @@ env/
 .DS_Store
 *.log
 runs/
+
+# LaTeX
+*.aux
+*.lof
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cbl
+*.idx
+*.ilg
+*.ind
+*.bbl
+*.blg
+*.brf
+*.run.xml
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
