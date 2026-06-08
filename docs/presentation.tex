@@ -23,14 +23,14 @@
 
 \title{Reinforcement Learning for Simple Adaptive Robot Behavior}
 \subtitle{Topic 6 / Track 8 --- Learning, Personalization \& Adaptation in HRI}
-\author{Nour Gaser \and Eman Saleh}
+\author{Nour \and Eman}
 \institute{German International University (GIU) \\ Interactive \& Social AI for Humanoid Robots}
 \date{Draft --- \today}
 
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\refnum}[1]{{\footnotesize\color{giuaccent}[#1]}}
 
-\hypersetup{pdftitle={Reinforcement Learning for Simple Adaptive Robot Behavior}, pdfauthor={Nour Gaser and Eman Saleh}, pdfkeywords={HRI, reinforcement learning, personalization, adaptation, NAO}}
+\hypersetup{pdftitle={Reinforcement Learning for Simple Adaptive Robot Behavior}, pdfauthor={Nour and Eman}}
 \pdfstringdefDisableCommands{\def\translate#1{#1}}
 
 \begin{document}
@@ -258,25 +258,442 @@
 
 \section{Literature Review}
 
-\begin{frame}{Anchor papers (Track 8 set)}
-  \begin{itemize}
-    \item \textbf{Irfan et al.\ (2019), \emph{Personalization in Long-Term HRI}.} Establishes the premise: adaptation/personalization are \emph{necessary} to sustain engagement and build trust. \refnum{Irfan2019}
-    \item \textbf{Irfan et al.\ (2021), \emph{Lifelong Learning \& Personalization (LEAP-HRI)}.} Robots ``in the wild'' must learn new concepts incrementally without forgetting. \refnum{Irfan2021}
-    \item \textbf{Tozadore et al.\ (2018), \emph{Towards Adaptation \& Personalization in Task-Based HRI}.} A concrete personalization framework on a humanoid; classifies user signals to adapt activities and prolong interaction. \refnum{Tozadore2018}
-    \item \textbf{Pollmann et al.\ (2023), \emph{Entertainment vs.\ Manipulation}.} User-centered + ethical analysis of a personalized robot; personalization helps UX but risks manipulation. \refnum{Pollmann2023}
-  \end{itemize}
+\begin{frame}{How we read the literature: two layers}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Layer 1 --- Foundational context} \emph{(cited, not dissected)}
+      \begin{itemize}\footnotesize
+        \item Irfan et al.\ (2019, 2021): \emph{why} adapt --- engagement, lifelong learning. \refnum{Irfan2019}\refnum{Irfan2021}
+        \item Mitsunaga et al.\ (2005/08): RL adapts \emph{social} comfort signals. \refnum{Mitsunaga2005}
+        \item Pollmann et al.\ (2023): the ethics of personalization. \refnum{Pollmann2023}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Layer 2 --- Deep analysis} \emph{(full journey)}
+      \begin{itemize}\footnotesize
+        \item Modern (2024--2025) \emph{full research papers} with methodology, experiments, and results we can interrogate.
+        \item \textbf{Paper 1:} Gonzalez-Santocildes et al.\ (2024) --- comfort-driven RL. \refnum{Gonzalez2024}
+        \item \textbf{Paper 2:} Zedda et al.\ (2023) --- engagement RL on a humanoid SAR. \refnum{Zedda2023}
+        \item \textbf{Paper 3:} Tozadore et al.\ (2018) --- adaptation on \emph{NAO} (rule-based). \refnum{Tozadore2018}
+        \item \textbf{Paper 4:} Wang et al.\ (2025) --- preference-based RL, the frontier. \refnum{Wang2025}
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.6em}
+  \begin{block}{Why this split}
+    \footnotesize The 2019/2021 anchors are 2-page \emph{workshop} statements --- valuable framing, but no methodology to analyze. A non-naïve review dissects \emph{full} papers and traces each design choice; the workshop papers set the stage they sit on.
+  \end{block}
 \end{frame}
 
-\begin{frame}{Added papers --- the RL ``how'' the anchors leave open}
-  \begin{itemize}
-    \item \textbf{Mitsunaga et al.\ (2005/2008), \emph{Robot Behavior Adaptation via Policy-Gradient RL}.} The seminal method: a social robot uses policy-gradient RL to adjust \emph{interaction distance, gaze meeting, and motion speed/timing}, reading subconscious human comfort signals as reward; adapts to individual preferences across 12 subjects. \refnum{Mitsunaga2005}
-    \item \textbf{Patompak et al.\ (2020), \emph{Learning Proxemics for Personalized HRI}.} Builds a Social Force Model via fuzzy inference and tunes it with RL so the robot learns each person's comfortable interaction distance; validated in simulation and on a real robot. \refnum{Patompak2020}
-  \end{itemize}
+\begin{frame}{Paper 1 --- Gonzalez-Santocildes et al.\ (2024): the problem}
+  \footnotesize \emph{``Adaptive Robot Behavior Based on Human Comfort Using Reinforcement Learning''}, IEEE Access. \refnum{Gonzalez2024}
   \vspace{0.4em}
-  {\footnotesize \emph{Rationale:} the anchors explain \emph{why} and \emph{what} to personalize; these two supply concrete \emph{RL mechanisms} for adapting social behavior --- with the proxemics formulation that maps cleanly onto NAO's sonar + tactile sensors.}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{The problem}
+      \begin{itemize}\footnotesize
+        \item Most RL-for-robotics ignores the \emph{human}: optimizes task success, not human comfort.
+        \item Prior comfort work is largely \emph{theoretical} and \alert{not replicable}.
+      \end{itemize}
+      \textbf{Their contribution}
+      \begin{itemize}\footnotesize
+        \item An open-source, parametric \alert{Unity} environment the community can reuse.
+        \item A \emph{comfort reward function} whose strictness is set by one parameter.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{The setup (important caveats)}
+      \begin{itemize}\footnotesize
+        \item Robot: \alert{UR3e} --- an \emph{industrial arm}, not a social/humanoid robot.
+        \item Task: pick-and-place a coloured ball while a (simulated) human moves nearby.
+        \item Comfort here = \emph{physical} (distance, speed), \emph{not social} (warmth, rapport).
+        \item Algorithm: \alert{SAC} (deep RL for continuous control).
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-\begin{frame}{Methodological critique \& research gaps}
+\begin{frame}{Paper 1 --- Methodology: comfort inside the reward}
+  \footnotesize
+  Standard task reward, \emph{minus} a comfort penalty that the user can switch on and weight:
+  \[
+    R = k_1 F_{\text{task1}} + k_2 F_{\text{task2}} + k_3 F_{\text{task3}} \;-\; F_{\text{comfort}}(C_l, N_c)
+  \]
+  \[
+    F_{\text{comfort}}(C_l,N_c) = \alpha\, F_{\text{conf1}}(C_l,N_c)\;+\;\beta\, F_{\text{conf2}}(C_l,N_c)
+  \]
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}\footnotesize
+        \item $F_{\text{conf1}}$: penalty on \alert{distance} (tanh threshold) --- too close hurts reward.
+        \item $F_{\text{conf2}}$: penalty on \alert{joint speed} per step --- too fast hurts reward.
+        \item $\alpha,\beta$: weight each part; set both $=0$ and it is plain task RL.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Why ``comfort \emph{levels}'' ($C_l$ of $N_c$)?}
+      \begin{itemize}\footnotesize
+        \item Comfort is \alert{discretized} (10 levels), each trained separately --- easier than one policy over a continuum.
+        \item The level sets \emph{where} the distance/speed penalty threshold sits.
+        \item Static per run = \emph{controlled variation}: vary one thing, attribute the change cleanly.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 1 --- Results: one parameter, measurably different behavior}
+  \begin{center}
+    \includegraphics[width=0.92\linewidth]{gonzalez_results.pdf}
+  \end{center}
+  \vspace{-0.3em}
+  {\footnotesize As comfort rises, the robot works \alert{closer} ($\approx$25\% less distance) and \alert{faster} ($\approx$12\% fewer steps). Trained with \textbf{SAC} (30M steps $\approx$4.4 days on a GPU). \emph{Charts redrawn from Gonzalez et al.\ (2024), Figs.\ 5--6; values approximate.} \refnum{Gonzalez2024}}
+\end{frame}
+
+\begin{frame}{Paper 1 --- Critique \& what it means for us}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Strengths}
+      \begin{itemize}\footnotesize
+        \item Clean \emph{controlled} result: behavior provably tracks the comfort parameter.
+        \item Open, replicable environment.
+      \end{itemize}
+      \textbf{Gaps (their own + ours)}
+      \begin{itemize}\footnotesize
+        \item \alert{Comfort is set manually}; measuring it \emph{live} from a person is unsolved (they suggest HR/EEG/a button).
+        \item Only \emph{move-pick-place} tasks --- does it generalize?
+        \item \emph{Physical/industrial} comfort, not \emph{social}; not a humanoid.
+        \item Validated only in \emph{simulation} --- real-robot transfer is future work.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{How this feeds our project}
+      \begin{itemize}\footnotesize
+        \item We take their proven idea --- \emph{comfort in the reward} --- and supply the missing piece: a \alert{live} comfort signal from NAO's \emph{sonar + tactile} sensors.
+        \item We move from \emph{physical} to \alert{social} comfort (greeting distance), bridging to Mitsunaga.
+        \item Discrete states $\Rightarrow$ \emph{tabular Q-learning}, not SAC: lighter, laptop-trainable, faster.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 2 --- Zedda et al.\ (2023): the problem}
+  \footnotesize \emph{``An Adaptive Behaviour-Based Strategy for SARs interacting with Older Adults with MCI during a Serious Game Scenario''}, SARs workshop @ CHI 2023. \refnum{Zedda2023}
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{The problem}
+      \begin{itemize}\footnotesize
+        \item Cognitive training for older adults with \alert{MCI} is repetitive $\Rightarrow$ boredom $\Rightarrow$ disengagement $\Rightarrow$ dropout.
+        \item A socially assistive robot (SAR) could keep them engaged --- \emph{if} it adapts its behavior to the user's state.
+      \end{itemize}
+      \textbf{Their contribution}
+      \begin{itemize}\footnotesize
+        \item A \alert{Q-learning} strategy that picks robot \emph{verbal + non-verbal} actions to keep engagement high.
+        \item Two selectable robot \emph{personalities} (extravert / introvert).
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{The setup (caveats)}
+      \begin{itemize}\footnotesize
+        \item Robot: \alert{Pepper} --- NAO's sibling (same maker, same \texttt{NAOqi} SDK) $\Rightarrow$ transfers to NAO.
+        \item Task: a ``cooking'' serious game (8 questions).
+        \item \alert{Simulation only}: two user models (healthy + MCI); real-user study is future work.
+        \item This is the \emph{workshop} precursor; a fuller 2025 journal version exists.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 2 --- Methodology: the engagement MDP}
+  \footnotesize Tabular Q-learning, $Q(s,a)$ table, $\varepsilon$-greedy; model-free, off-policy.
+  \vspace{0.3em}
+  \begin{columns}[T]
+    \begin{column}{0.34\textwidth}
+      \textbf{State $S$}
+      \begin{itemize}\footnotesize
+        \item Gaze direction (robot / tablet / away)
+        \item Smiling (none / smile / broad)
+        \item Answer (right / wrong)
+        \item $\Rightarrow$ engagement level
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \textbf{Action $A$ (3)}
+      \begin{itemize}\footnotesize
+        \item $a_0$: enthusiastic / dynamic
+        \item $a_1$: neutral
+        \item $a_2$: stimulating (re-engage)
+      \end{itemize}
+      {\scriptsize each filtered through personality: volume, rate, pitch, gesture size}
+    \end{column}
+    \begin{column}{0.32\textwidth}
+      \textbf{Reward $R$}
+      \begin{itemize}\footnotesize
+        \item $+$ keep engagement medium/high
+        \item $-$ let it fall to ``low''
+        \item $-0.05$ per step (settle fast)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.3em}
+  \begin{alertblock}{A sharp detail worth noting}
+    \footnotesize They set discount $\gamma=0.05$ --- \emph{very} myopic: the agent almost only values the \emph{immediate} engagement response. Reasonable for a per-question reward, but it forgoes long-horizon credit assignment (it behaves almost like a contextual bandit). Learning rate $\alpha=0.8$ is high.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Paper 2 --- Results: convergence in simulation}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.54\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{zedda_convergence.pdf}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \textbf{Training}
+      \begin{itemize}\footnotesize
+        \item Python; 100 epochs $\times$ 35 episodes
+        \item $\gamma=0.05$, $\alpha=0.8$, $\varepsilon=0.2$ (exp.\ decay)
+        \item Step penalty $-0.05$
+      \end{itemize}
+      \textbf{Outcome}
+      \begin{itemize}\footnotesize
+        \item Q-table \alert{converged for both} user models $\Rightarrow$ more training won't help.
+        \item Preliminary evidence the strategy works --- \emph{but no real users yet}.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.2em}
+  {\scriptsize \emph{Convergence curve is a conceptual illustration; the paper reports convergence for both models but does not publish per-epoch values.} \refnum{Zedda2023}}
+\end{frame}
+
+\begin{frame}{Paper 2 --- Critique \& what it means for us}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Strengths}
+      \begin{itemize}\footnotesize
+        \item \alert{Closest match to our project}: humanoid SAR + \emph{tabular Q-learning} + engagement reward.
+        \item Verbal + non-verbal action design; sim-first then planned real study --- mirrors our plan.
+      \end{itemize}
+      \textbf{Gaps (their own + ours)}
+      \begin{itemize}\footnotesize
+        \item \alert{Simulation only}; real within-subjects study deferred.
+        \item Reward weights hand-set from prior qualitative work --- not user-validated.
+        \item Only 3 actions; personality fixed per session (not adapted).
+        \item $\gamma=0.05$ limits long-horizon learning.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{How this feeds our project}
+      \begin{itemize}\footnotesize
+        \item Validates \emph{exactly} our method (tabular Q-learning for engagement on a humanoid).
+        \item Pepper $\to$ NAO is near-direct (\texttt{NAOqi}): their state (gaze, smile) maps to NAO's camera; engagement reward to our signals.
+        \item We can \alert{realize the real-user study they defer} --- our contribution sits in their gap.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 3 --- Tozadore et al.\ (2018): the problem}
+  \footnotesize \emph{``Towards adaptation and personalization in task based on Human-Robot Interaction''}, LARS/SBR 2018. \refnum{Tozadore2018}
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{The problem}
+      \begin{itemize}\footnotesize
+        \item Social robots lose \alert{novelty} $\Rightarrow$ motivation \& attention drop.
+        \item Hypothesis: personalized conversation + content adaptation holds interest longer.
+      \end{itemize}
+      \textbf{Their contribution}
+      \begin{itemize}\footnotesize
+        \item A \alert{dynamic} user-adaptation system (vs.\ the usual \emph{static} user models).
+        \item Reads body + verbal signals to adjust behavior; stores user info to personalize dialogue (rapport).
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{The setup (key facts)}
+      \begin{itemize}\footnotesize
+        \item Robot: \alert{NAO} --- \emph{our exact platform}.
+        \item Task: a storytelling activity; \textbf{10 real participants}.
+        \item \alert{Decision-making is RULE-BASED}, not RL --- ML is used only for \emph{perception}.
+        \item This is the ``before-RL'' approach: hand-tuned weighted rules.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 3 --- Methodology: hand-tuned adaptation + ML perception}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Decision logic (rule-based)}
+      \footnotesize
+      Three indicator groups $\rightarrow$ parameters:
+      \begin{itemize}\footnotesize
+        \item Attention $\alpha$: face gaze, posture
+        \item Communication $\beta$: words, emotion
+        \item Task $\gamma$: success rate, answer time
+      \end{itemize}
+      \[ F_{\text{Adp}}(t)=w_\alpha\alpha + w_\beta\beta + w_\gamma\gamma \]
+      {\scriptsize $\ge 0.66 \to {+}1$, $\le 0.33 \to {-}1$, else $0$; behavior $\Psi\!\in\!\{1..5\}$ (info $\leftrightarrow$ gesture), starts at 3.}
+      {\scriptsize Weights set by hand: $w_\gamma{=}0.6$ (task), $w_\alpha{=}w_\beta{=}0.2$.}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Perception (the ML part)}
+      \begin{itemize}\footnotesize
+        \item Face/gaze: \alert{Haar cascade} (attention deviations).
+        \item Emotion: \alert{MobileNet}, Ekman 6+neutral; trained on FER+, RAF, QIDER.
+        \item Answer check: \alert{Levenshtein} edit distance.
+      \end{itemize}
+      \textbf{User model (personalization)}
+      \begin{itemize}\footnotesize
+        \item Stores name, age, 8 preferences (sport, food, band\ldots).
+        \item Pulls definitions from \alert{Wikipedia} to chat about them; gives NAO a ``personal life'' for rapport.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 3 --- Experiment \& results}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.56\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{tozadore_likert.pdf}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \footnotesize
+      \textbf{Protocol}: 10 users ($\bar{x}_{\text{age}}{=}24.4$), $\sim$12 min each; NAO greets, learns 3 preferences, tells 3 stories, quizzes, chats.
+      \medskip
+      \textbf{Read it as:}
+      \begin{itemize}\footnotesize
+        \item Users \alert{value} adaptation (I4 6.7, I6 6.6) more than they \alert{perceived} it (I5 5.6, I7 5.7).
+        \item Enjoyment high (I1 6.3); flaws low (I2 3.4).
+        \item Task-success gain $t_1\!\to\!t_3$ was \alert{not significant} ($p{=}0.12$).
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.2em}
+  {\scriptsize Likert chart redrawn from Tozadore et al.\ (2018), Fig.\ 4 (real published values). \refnum{Tozadore2018}}
+\end{frame}
+
+\begin{frame}{Paper 3 --- Critique \& what it means for us}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Strengths}
+      \begin{itemize}\footnotesize
+        \item \alert{Real users on NAO} (not simulation) --- our platform, with a usable evaluation template.
+        \item Genuine personalization (preferences, rapport) + honest negative findings.
+      \end{itemize}
+      \textbf{Gaps (their own + ours)}
+      \begin{itemize}\footnotesize
+        \item \alert{Hand-tuned weights} ($w_\gamma{=}0.6$\ldots) --- no learning; brittle to re-tune.
+        \item Perception fragile: edit distance misses paraphrases; Ekman emotions misread \emph{concentration}.
+        \item Tiny sample (10), short single session; effect not significant.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{How this feeds our project}
+      \begin{itemize}\footnotesize
+        \item Completes our arc: NAO personalization works \emph{with hand-coded rules} --- so \alert{let RL learn the policy} instead of tuning weights by hand.
+        \item Their Likert items (I1--I7) are a ready \alert{evaluation template} for our user study.
+        \item Their failure modes (brittle perception, small $N$) tell us what to design around.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 4 --- Wang et al.\ (2025): the problem}
+  \footnotesize \emph{``Personalization in HRI through Preference-based Action Representation Learning'' (PbARL)}, arXiv 2025. \refnum{Wang2025}
+  \vspace{0.4em}
+  \begin{columns}[T]
+    \begin{column}{0.52\textwidth}
+      \textbf{The big shift: learn the reward}
+      \begin{itemize}\footnotesize
+        \item All prior papers \emph{hand-design} the reward (comfort, engagement, weights). Hard and brittle.
+        \item \alert{Preference-based RL (PbRL)}: show the person two behaviors, ask ``which do you prefer?''; \emph{learn} the reward from those comparisons.
+      \end{itemize}
+      \textbf{The problem they fix}
+      \begin{itemize}\footnotesize
+        \item Existing PbRL trains a policy \alert{from scratch} per user $\Rightarrow$ wastes human feedback on the basic task.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.46\textwidth}
+      \textbf{The setup (caveats)}
+      \begin{itemize}\footnotesize
+        \item Robot: \alert{Kinova Jaco} assistive arm (not humanoid/NAO).
+        \item Assistive Gym sim + real user study (\textbf{N=8}).
+        \item \alert{Frontier \& heavy}: deep RL, a cVAE, \textbf{3$\times$ RTX 4090 GPUs} --- the opposite end from our laptop tabular approach.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 4 --- Methodology: personalize without breaking the task}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{The core idea}
+      \begin{itemize}\footnotesize
+        \item Start from a \alert{frozen} pre-trained policy that already knows the basic task.
+        \item Don't retrain it (that degrades the task). Instead, learn a \alert{latent action representation} (a conditional VAE) layered on top.
+        \item Train it to \emph{maximize mutual information} between the task domain and the preference-aligned domain.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Why it works}
+      \begin{itemize}\footnotesize
+        \item Naive fine-tuning optimizes \emph{only} preference $\Rightarrow$ breaks the task.
+        \item PbARL balances both: reconstruction loss \emph{preserves the task}, contrastive loss \emph{aligns preferences}.
+      \end{itemize}
+      \begin{block}{}
+        \scriptsize Far more complex than tabular Q-learning --- we cite it as the \emph{state of the art}, not as something we replicate.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Paper 4 --- Results}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.54\textwidth}
+      \centering
+      \includegraphics[width=\linewidth]{wang_userstudy.pdf}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \footnotesize
+      \textbf{Benchmark (Assistive Gym)}
+      \begin{itemize}\footnotesize
+        \item PbARL keeps task success (only $\downarrow$4--7) \emph{and} boosts preference reward ($\sim$+40).
+        \item Naive fine-tune (PrefFT) personalizes but drops success $\downarrow$11--22; from-scratch PbRL \alert{collapses} ($\downarrow$48--53).
+      \end{itemize}
+      \textbf{Real study (N=8)}: PbARL best on \alert{both} satisfaction \& personalization ($p<.01$).
+    \end{column}
+  \end{columns}
+  \vspace{0.2em}
+  {\scriptsize User-study chart redrawn from Wang et al.\ (2025), Fig.\ 4; values approximate. \refnum{Wang2025}}
+\end{frame}
+
+\begin{frame}{Paper 4 --- Critique \& what it means for us}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \textbf{Strengths}
+      \begin{itemize}\footnotesize
+        \item \alert{Learns} the reward from preferences --- no hand-design.
+        \item Personalizes \emph{without} degrading the task; real IRB-approved user study.
+      \end{itemize}
+      \textbf{Gaps (their own + ours)}
+      \begin{itemize}\footnotesize
+        \item Assistive arm, not humanoid; \alert{heavy compute} (3 GPUs).
+        \item Complex pipeline; preferences treated as fixed (lifelong = future work); $N=8$.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{How this feeds our project}
+      \begin{itemize}\footnotesize
+        \item Defines the \alert{frontier}: where reward design is going (learned from preferences).
+        \item Justifies our scope by contrast: we start \emph{simple, interpretable, laptop-trainable} (tabular Q-learning + explicit tactile reward).
+        \item Clear \alert{future work} for us: replace our hand-set reward with \emph{learned preferences}.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Synthesis --- methodological gaps across the literature}
   \begin{itemize}
     \item \textbf{Reality gap:} fast convergence in simulation, but sensor noise and dynamics differ on hardware.
     \item \textbf{Sample efficiency:} real trials are slow and cause wear --- few-shot learning, human reward, and LfD warm-starts help.
@@ -344,22 +761,22 @@
 
 \begin{frame}{Shared architecture --- why any direction is one line away}
   \footnotesize
-  Every candidate experiment uses the \emph{same} RL loop; only the state/action/reward bindings change. An abstract robot interface lets the identical loop run on laptop, simulator, or real NAO.
-  \vspace{0.15em}
+  Every candidate experiment is the \emph{same} RL loop. Only the state/action/reward bindings change. The learning code never touches a concrete robot --- it talks to an abstract interface, so the identical loop runs on laptop, simulator, or real NAO.
+  \vspace{0.4em}
   \begin{columns}[c,onlytextwidth]
     \begin{column}{0.46\textwidth}
       \centering
       \resizebox{\linewidth}{!}{%
       \begin{tikzpicture}[
-        node distance=0.45cm,
-        layer/.style={draw, rounded corners, minimum width=5.2cm, minimum height=0.68cm, align=center, thick, font=\scriptsize},
-        impl/.style={draw, rounded corners, minimum width=1.55cm, minimum height=0.62cm, align=center, font=\scriptsize}]
+        node distance=0.55cm,
+        layer/.style={draw, rounded corners, minimum width=5.4cm, minimum height=0.8cm, align=center, thick, font=\footnotesize},
+        impl/.style={draw, rounded corners, minimum width=1.7cm, minimum height=0.8cm, align=center, font=\scriptsize}]
         \node[layer, fill=giublue!12] (loop) {RL loop \\ {\scriptsize reset $\to$ act $\to$ step $\to$ update}};
         \node[layer, fill=giublue!8, below=of loop] (env) {Gym-style env \\ {\scriptsize defines $S$, $A$, $R$}};
         \node[layer, fill=giuaccent!14, below=of env] (iface) {\texttt{RobotInterface} \\ {\scriptsize say / perform / sense}};
-        \node[impl, fill=giuaccent!8, below=0.65cm of iface, xshift=-1.75cm] (mock) {Mock \\ (laptop)};
-        \node[impl, fill=giuaccent!8, below=0.65cm of iface] (sim) {Virtual \\ NAO};
-        \node[impl, fill=giuaccent!8, below=0.65cm of iface, xshift=1.75cm] (real) {Real \\ NAO};
+        \node[impl, fill=giuaccent!8, below=0.9cm of iface, xshift=-1.9cm] (mock) {Mock \\ (laptop)};
+        \node[impl, fill=giuaccent!8, below=0.9cm of iface] (sim) {Virtual \\ NAO};
+        \node[impl, fill=giuaccent!8, below=0.9cm of iface, xshift=1.9cm] (real) {Real \\ NAO};
         \draw[-{Stealth[length=2mm]}, thick] (loop)--(env);
         \draw[-{Stealth[length=2mm]}, thick] (env)--(iface);
         \draw[-{Stealth[length=2mm]}] (iface)--(mock);
@@ -374,7 +791,7 @@
         \item \alert{Sensor noise injected} in the mock to harden the policy and shrink the eventual reality gap.
         \item Swapping to a NAO is literally:
       \end{itemize}
-      \vspace{0.05em}
+      \vspace{0.2em}
       {\scriptsize\ttfamily
       \textcolor{gray}{\# robot = MockRobot()}\\
       robot = NaoRobot(ip=...)\\
@@ -536,6 +953,20 @@ class NaoRobot(RobotInterface):      \textcolor{gray}{# real NAO via NAOqi}
   \begin{thebibliography}{99}
     \setbeamertemplate{bibliography item}[text]
 
+    \bibitem{Gonzalez2024} A.\ Gonzalez-Santocildes, J.-I.\ Vazquez, A.\ Eguiluz,
+      ``Adaptive Robot Behavior Based on Human Comfort Using Reinforcement Learning,''
+      \emph{IEEE Access}, vol.\ 12, pp.\ 122289--122299, 2024.
+      DOI: 10.1109/ACCESS.2024.3451663.
+
+    \bibitem{Zedda2023} E.\ Zedda, M.\ Manca, F.\ Patern\`o, C.\ Santoro,
+      ``An Adaptive Behaviour-Based Strategy for SARs interacting with Older Adults with MCI during a Serious Game Scenario,''
+      \emph{SARs Workshop (TMI), CHI 2023}, Hamburg, 2023. arXiv:2305.01492.
+      (Extended: \emph{Behaviour \& Information Technology}, 2025.)
+
+    \bibitem{Wang2025} R.\ Wang, D.\ Zhao, D.\ Suh, Z.\ Yuan, G.\ Chen, B.-C.\ Min,
+      ``Personalization in Human-Robot Interaction through Preference-based Action Representation Learning,''
+      arXiv:2409.13822, 2025.
+
     \bibitem{Irfan2019} B.\ Irfan et al.,
       ``Personalization in Long-Term Human-Robot Interaction,''
       \emph{14th ACM/IEEE Int. Conf. on HRI}, 2019, pp.\ 685--686.
@@ -549,7 +980,7 @@ class NaoRobot(RobotInterface):      \textcolor{gray}{# real NAO via NAOqi}
     \bibitem{Tozadore2018} D.\ C.\ Tozadore et al.,
       ``Towards Adaptation and Personalization in Task Based on Human-Robot Interaction,''
       \emph{LARS/SBR/WRE}, 2018, pp.\ 383--389.
-      (IEEE Xplore doc.\ 8588581; DOI to verify.)
+      DOI: 10.1109/LARS/SBR/WRE.2018.00075.
 
     \bibitem{Pollmann2023} K.\ Pollmann, W.\ Loh, N.\ Fronemann, D.\ Ziegler,
       ``Entertainment vs.\ manipulation: Personalized human-robot interaction,''
@@ -597,7 +1028,7 @@ class NaoRobot(RobotInterface):      \textcolor{gray}{# real NAO via NAOqi}
 
 \begin{frame}[standout]
   Thank you --- feedback welcome.\\[0.4em]
-  {\normalsize Nour Gaser \& Eman Saleh}
+  {\normalsize Nour \& Eman}
 \end{frame}
 
 \appendix
