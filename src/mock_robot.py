@@ -2,45 +2,52 @@
 mock_robot.py
 =============
 
-A laptop-only implementation of `RobotInterface`. It contains a simple
-*simulated person* so that the full RL loop can run with no hardware and no
-NAOqi SDK installed --- this is how we satisfy the "implementation has begun"
-requirement before robot access is confirmed.
+A laptop-only implementation of `RobotInterface`. It contains a *simulated person*
+so that the full RL loop runs with no hardware and no NAOqi SDK installed.
 
-The simulated person has a hidden comfort preference (a comfortable distance
-and greeting intensity). The robot does NOT know these; it only receives
-social signals (a head touch when the person is comfortable, or the person
-leaving when crowded). The learning agent must discover the comfortable
-configuration purely from those signals --- exactly the real task.
+The person's comfort preference now lives in a `UserProfile` (see `user_profile.py`)
+rather than being hard-coded, so the same robot code can be pointed at different
+simulated people. That is what turns this from an adaptation demo into a
+personalization demo.
 
-Sensor noise is injected on purpose: it "hardens" the learned policy and makes
-the eventual sim-to-real gap smaller (see docs/architecture.md).
+The robot does NOT observe the profile. It receives only social signals --- a head
+touch when the person is comfortable, or the person leaving when crowded --- and
+must infer the preference from those alone.
+
+Sensor noise is injected on purpose: it hardens the learned policy and shrinks the
+eventual sim-to-real gap (see docs/architecture.md).
 """
 
 import random
+
 from .robot_interface import RobotInterface, Signals
+from .user_profile import UserProfile, NEUTRAL
 
 # Distance the robot moves per step (metres).
 _STEP = 0.30
 # Physical bounds on robot-person distance (metres).
 _MIN_D, _MAX_D = 0.20, 2.20
+# Where every interaction starts.
+_START_D = 1.5
 
 
 class MockRobot(RobotInterface):
-    def __init__(self, sensor_noise: float = 0.03, seed: int | None = None):
+    def __init__(
+        self,
+        profile: UserProfile = NEUTRAL,
+        sensor_noise: float = 0.03,
+        seed: int | None = None,
+    ):
+        self.profile = profile
         self._rng = random.Random(seed)
         self._noise = sensor_noise
-        self._distance = 1.5          # start far away
-        self._intensity = 0           # start at low intensity
+        self._distance = _START_D
+        self._intensity = 0
         self._present = True
-        # --- hidden person preferences (unknown to the agent) ------------
-        self._ideal_lo, self._ideal_hi = 0.45, 0.90   # "personal" zone
-        self._ideal_intensity = 1                      # medium gesture
-        self._too_close = 0.35                         # crowding threshold
 
     # --- actuation --------------------------------------------------------
     def say(self, text: str) -> None:
-        pass  # no-op on the mock; real NAO would speak
+        pass  # no-op on the mock; a real NAO would speak
 
     def perform(self, action: str) -> None:
         if action == "closer":
@@ -56,8 +63,10 @@ class MockRobot(RobotInterface):
         else:
             raise ValueError(f"unknown action: {action}")
 
-        # The simulated person may leave if the robot crowds them.
-        if self._distance < self._too_close and self._rng.random() < 0.6:
+        # A crowded person may end the interaction. How readily depends on
+        # the profile: `reserved` disengages far sooner than `sociable`.
+        p = self.profile
+        if self._distance < p.too_close and self._rng.random() < p.leave_prob:
             self._present = False
 
     # --- sensing ----------------------------------------------------------
@@ -65,14 +74,12 @@ class MockRobot(RobotInterface):
         noisy_d = self._distance + self._rng.gauss(0, self._noise)
         noisy_d = max(_MIN_D, min(_MAX_D, noisy_d))
 
-        comfortable = (
-            self._ideal_lo <= self._distance < self._ideal_hi
-            and self._intensity == self._ideal_intensity
-        )
-        if comfortable:
-            touch = self._rng.random() < 0.90        # clear approval
-        elif self._ideal_lo <= self._distance < self._ideal_hi:
-            touch = self._rng.random() < 0.20        # close-ish
+        p = self.profile
+        in_zone = p.ideal_lo <= self._distance < p.ideal_hi
+        if in_zone and self._intensity == p.ideal_intensity:
+            touch = self._rng.random() < p.approve_prob    # clear approval
+        elif in_zone:
+            touch = self._rng.random() < p.partial_prob    # right place, wrong manner
         else:
             touch = False
 
@@ -83,6 +90,13 @@ class MockRobot(RobotInterface):
 
     # --- episode lifecycle ------------------------------------------------
     def reset_interaction(self) -> None:
-        self._distance = 1.5
+        self._distance = _START_D
         self._intensity = 0
         self._present = True
+
+    # --- personalization hook --------------------------------------------
+    def set_profile(self, profile: UserProfile) -> None:
+        """Swap the simulated person. Used to train one policy across a
+        population, and to test a policy against a user it never met."""
+        self.profile = profile
+        self.reset_interaction()

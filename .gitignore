@@ -32,3 +32,5 @@ runs/
 *.nav
 *.snm
 *.vrb
+# generated figures (regenerate with --plots)
+results/
