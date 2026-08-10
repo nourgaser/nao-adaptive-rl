@@ -9,38 +9,46 @@ Adaptation in HRI.
 
 ---
 
-## What this is (and what it is not yet)
+## What this is
 
-We have **not** locked a single experiment. By design. The seminar asks us to
-shape our own research question, so we want that decision to come out of the
-discussion with the committee.
+A simulation study of **whether a robot should learn one policy for everyone or
+one policy per person**, in the proxemics/greeting setting: how close to
+approach, and how intense a greeting to give.
 
-What we *have* done is build the **common plumbing** that every candidate
-direction shares: a robot-agnostic RL loop, a Gym-style environment, a hardware
-abstraction layer, and a runnable laptop simulation. So the openness is
-**readiness, not indecision** --- we can commit to any of the directions below
-(or a new one the committee suggests) and start fine-tuning immediately.
+Three simulated users have different, hidden comfort preferences (reserved,
+neutral, sociable). The robot is told nothing about them and must infer
+behaviour from social signals alone — head touch and presence.
 
-The one thing that *is* implemented end-to-end is an **illustrative** experiment
-(adaptive greeting / social distance), used to prove the architecture works and
-that tabular Q-learning converges from social signals alone.
+**The headline result.** The best possible *single* policy is optimal for one
+user and worse than doing nothing for the other two. Personalising recovers
+that, and the gap is large:
 
-## Candidate directions (to be decided at the seminar)
+| condition | reserved | neutral | sociable |
+|---|---|---|---|
+| scripted baseline | −1.26 | 2.03 | −0.75 |
+| one policy, trained on all users | 6.45 | −0.75 | −0.75 |
+| best single policy | **11.81** | −0.75 | −0.75 |
+| **personalised (one per user)** | **11.83** | **10.31** | **8.34** |
 
-| Direction               | Adaptive behavior                  | Reward signal                | Baseline             |
-|-------------------------|------------------------------------|------------------------------|----------------------|
-| **A** Greeting/proxemics| approach distance + greeting intensity | head touch + sonar distance | fixed scripted greet |
-| **B** Tutoring/pace     | speech rate, pauses, difficulty    | answer correctness + engagement | fixed-pace tutor  |
-| **C** Engagement max.   | pick behavior from a repertoire    | change in gaze + proximity   | random / fixed rotation |
+Mean reward per interaction, 8 seeds, 6000 episodes. Personalisation gains
+**+11.06** and **+9.09** on the two users a single policy cannot serve.
 
-All three are the **same RL loop**; only the state features, actions, and reward
-wiring differ. See [`docs/architecture.md`](docs/architecture.md).
+**A negative result we report rather than hide.** Warm-starting a new user's
+policy from other users' experience does **not** help — at equal training budget
+it matches learning from scratch, and on a small budget it is worse. Our reading:
+transfer works when task competence and preference are separable, and in
+proxemics the task *is* the preference, so there is nothing to transfer. This is
+the most interesting thing in the study to discuss.
+
+Scoped out deliberately, and stated in the abstract rather than quietly dropped:
+deep RL, real hardware, human participants, and subjective (Godspeed) measures.
 
 ## Quickstart
 
 ```bash
 pip install -r requirements.txt
-python -m experiments.train_greeting
+python -m experiments.personalization --plots     # the main result
+python -m experiments.train_greeting              # the single-user warm-up
 ```
 
 Expected output: a learning curve, then the learned policy beating a scripted
