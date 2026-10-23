@@ -57,6 +57,8 @@ def main() -> None:
                     help="infrared works but touch does not: type touch only")
     ap.add_argument("--scale", type=float, default=1 / 3,
                     help="physical metres per model metre (default 1/3: bins at 15/30/50 cm)")
+    ap.add_argument("--walk-repeat", type=int, default=2,
+                    help="walk cycles per closer/back; calibrate so one step is about 10 cm")
     ap.add_argument("--steps", type=int, default=15)
     ap.add_argument("--episodes", type=int, default=6000)
     ap.add_argument("--seed", type=int, default=0)
@@ -80,7 +82,8 @@ def main() -> None:
                              settle_s=0, on_reset=api.reset, verbose=False)
         print(f"Dry run: fake Yanshee, simulated person '{person.name}'.")
     else:
-        robot = YansheeRobot(ip=args.ip, operator=operator, distance_scale=args.scale)
+        robot = YansheeRobot(ip=args.ip, operator=operator, distance_scale=args.scale,
+                             walk_repeat=args.walk_repeat)
         print(f"Connected to Yanshee at {args.ip}.")
 
     env = GreetingEnv(robot, max_steps=args.steps)
