@@ -1,0 +1,106 @@
+\documentclass[conference,a4paper]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{url}
+
+\begin{document}
+
+\title{Learning Individual Comfort: Personalized Proxemic Greeting\\
+for a Simulated Social Robot via Reinforcement Learning}
+
+\author{\IEEEauthorblockN{Eman Saleh, Nour Gaser}
+\IEEEauthorblockA{Department of Computer Science, German International University (GIU), Cairo, Egypt\\
+eman.khalil@alumni2024.giu-uni.de, nouraldin.algendi@student.giu-uni.de}}
+
+\maketitle
+
+\section{Problem Addressed}
+
+Social robots optimised for task completion routinely ignore that individuals
+differ: the interpersonal distance and greeting intensity one person finds
+welcoming, another finds intrusive. Reinforcement learning has been shown to adapt
+robot behaviour to users \cite{wang2025,tozadore2018,gonzalez2024,zedda2023}, but
+those evaluations are small ($N{=}8$--$28$), hardware-bound, and rarely separate
+\emph{adaptation} --- learning a good behaviour --- from \emph{personalization}
+--- learning a \emph{different} behaviour for each person.
+
+This work addresses that distinction: \emph{does a social robot actually need to
+personalize, or is one well-trained policy enough for everyone?} Personalization is
+expensive --- it requires per-user interaction data --- so answering this demands
+comparison against a \emph{trained generalist}, not merely a scripted robot.
+
+\section{Approach}
+
+We implement greeting/proxemics as a discrete MDP in simulation. State is the
+sensed distance bin (Hall's proxemic zones) crossed with commanded greeting
+intensity ($4\times3=12$ states); actions are $\{$approach, withdraw, intensify,
+soften, hold$\}$. Reward uses social signals only --- $+1$ approval, $-2$ if the
+person disengages, $-0.05$ per step --- so the robot never observes the preference
+it must satisfy. Learning is tabular Q-learning: interpretable, and 12 states need
+no function approximation and no GPU.
+
+Individual difference is modelled by a \texttt{UserProfile}: three simulated people
+(\emph{reserved}, \emph{neutral}, \emph{sociable}) with \emph{different hidden}
+comfortable distances and preferred intensities, placed in mutually exclusive
+distance bins so a policy optimal for one is wrong for another. We compare five
+conditions: scripted; one policy trained across the mixed population; the
+strongest \emph{coherent} single policy; personalized per user; and warm-started
+from other users then adapted (leave-one-out).
+
+All work is in simulation: without access to a physical humanoid, hardware trials
+and a subjective human study are explicitly \textbf{out of scope} and remain future
+work. The learning code addresses an abstract robot interface rather than any
+specific platform, so the identical loop would run against hardware unchanged.
+
+\section{Expected Outcome}
+
+The implementation is complete; preliminary results follow (8 seeds, 6000
+episodes, mean reward per interaction):
+
+\vspace{-0.8em}
+\begin{table}[h]
+\centering
+\scriptsize
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Condition} & \textbf{Reserved} & \textbf{Neutral} & \textbf{Sociable} \\
+\midrule
+Scripted            & $-1.26$          & $2.03$           & $-0.75$ \\
+One policy, mixed   & $6.45$           & $-0.75$          & $-0.75$ \\
+Best single policy  & $\mathbf{11.81}$ & $-0.75$          & $-0.75$ \\
+Personalized        & $\mathbf{11.83}$ & $\mathbf{10.31}$ & $\mathbf{8.34}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+\vspace{-1.2em}
+
+The result is unambiguous: the best single non-personalized policy is optimal for
+\emph{one} user ($11.81$) and worse than doing nothing for the other two ($-0.75$),
+while personalization gains $+11.06$ and $+9.09$ there. It is not a refinement; it
+is the difference between a working greeting and a failed one.
+
+We also report a \textbf{negative result}: warm-starting from other users did not
+help, merely matching from-scratch learning at equal budget and faring worse at a
+small one. We attribute this to a boundary condition on the transfer idea in PbARL
+\cite{wang2025}, which works because task competence and user preference are
+\emph{separable} --- the robot must still complete the task, only differently. In
+proxemics the task \emph{is} the preference, so another person's optimum carries no
+information about this one's. This is a useful limit rather than a failure, and the
+result most worth discussing.
+
+The demonstration presents learning curves, the per-user learned policies side by
+side, and the comparison above, executed live. The implementation is publicly
+available\footnote{\url{https://github.com/nourgaser/nao-adaptive-rl}} with a test
+suite; every reported number is reproducible from a fixed seed.
+
+\vspace{-0.5em}
+\begin{thebibliography}{9}
+\scriptsize
+\setlength{\itemsep}{0pt}
+\bibitem{wang2025} R. Wang \textit{et al.}, ``Personalization in HRI through preference-based action representation learning,'' \textit{IEEE ICRA}, 2025.
+\bibitem{tozadore2018} D. C. Tozadore \textit{et al.}, ``Towards adaptation and personalization in task based on HRI,'' \textit{LARS/SBR/WRE}, 2018.
+\bibitem{gonzalez2024} A. Gonzalez-Santocildes \textit{et al.}, ``Adaptive robot behavior based on human comfort using RL,'' \textit{IEEE Access}, 12, 2024.
+\bibitem{zedda2023} E. Zedda \textit{et al.}, ``Adaptive behaviour-based strategy for SARs with MCI older adults,'' \textit{arXiv:2305.01492}, 2023.
+\end{thebibliography}
+
+\end{document}
