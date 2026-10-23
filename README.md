@@ -14,7 +14,10 @@ Adaptation in HRI.
 | Presentation (as delivered) | [`presentation/presentation.pdf`](presentation/presentation.pdf), source in `presentation/main.tex` |
 | Report (as submitted, 31 July 2026) | [`report/report.pdf`](report/report.pdf) |
 | Project abstract | [`abstract/abstract.pdf`](abstract/abstract.pdf) |
-| Demo script | [`docs/DEMO_RUNBOOK.md`](docs/DEMO_RUNBOOK.md) |
+| Demo slides (Yanshee) | [`demo-slides/demo.pdf`](demo-slides/demo.pdf) |
+| Demo runbook (Yanshee) | [`docs/DEMO_RUNBOOK_YANSHEE.pdf`](docs/DEMO_RUNBOOK_YANSHEE.pdf) |
+| Robot session checklist | [`docs/ROBOT_SESSION_CHECKLIST.pdf`](docs/ROBOT_SESSION_CHECKLIST.pdf) |
+| Original simulation-only demo plan | [`docs/DEMO_RUNBOOK.pdf`](docs/DEMO_RUNBOOK.pdf) |
 | Result figures | [`results/`](results/) |
 
 ---
@@ -86,21 +89,28 @@ from the head-touch and presence signals.
 ```
 nao-adaptive-rl/
 ├── presentation/                 # seminar deck: LaTeX source, figures, PDF
+├── demo-slides/                  # short deck for the demo day
 ├── report/                       # submitted report (PDF)
 ├── abstract/                     # one-page project abstract
 ├── docs/
-│   ├── DEMO_RUNBOOK.md           # step-by-step script for the live demo
+│   ├── DEMO_RUNBOOK_YANSHEE.md   # the live demo on Yanshee (+ .pdf)
+│   ├── ROBOT_SESSION_CHECKLIST.md # setting up the robot before the demo (+ .pdf)
+│   ├── DEMO_RUNBOOK.md           # original simulation-only demo plan (+ .pdf)
 │   └── architecture.md           # the layered design + NAOqi mapping
 ├── src/
 │   ├── robot_interface.py        # abstract contract (the key seam)
 │   ├── mock_robot.py             # laptop impl + simulated person
 │   ├── user_profile.py           # hidden comfort preferences of the simulated users
-│   ├── nao_robot.py              # real-NAO impl (NAOqi stub, documented)
+│   ├── yanshee_robot.py          # Yanshee impl via YanAPI (the demo robot)
+│   ├── yanshee_fake.py           # fake YanAPI for dry runs and tests
+│   ├── nao_robot.py              # real-NAO impl (NAOqi stub, original plan)
 │   ├── envs/greeting_env.py      # Gym-style greeting/proxemics MDP
 │   └── agents/q_learning.py      # tabular Q-learning
 ├── experiments/
 │   ├── personalization.py        # main study: one policy vs one per user, warm-start
-│   └── train_greeting.py         # single-user warm-up
+│   ├── train_greeting.py         # single-user warm-up
+│   ├── yanshee_demo.py           # run a learned policy on Yanshee (or --dry-run)
+│   └── yanshee_check.py          # test each robot call, for the robot session
 ├── tests/                        # unit tests
 └── results/                      # figures written by personalization.py --plots
 ```
@@ -108,7 +118,28 @@ nao-adaptive-rl/
 The table above reproduces exactly with `python -m experiments.personalization --seeds 8`
 (the default is 5 seeds, which gives slightly different numbers).
 
-## Going from laptop to robot
+## Running on the Yanshee
+
+The demo robot is a UBTECH Yanshee (the NAO was not available). `src/yanshee_robot.py`
+implements `RobotInterface` with Yanshee's Python SDK, YanAPI; nothing else changed.
+Policies are learned in simulation and run on the robot without further learning.
+
+```bash
+# no robot needed: a fake YanAPI with the simulated person behind it
+python -m experiments.yanshee_demo --profile reserved --dry-run
+python -m experiments.yanshee_demo --profile sociable --person reserved --dry-run
+
+# on the robot (copy YanAPI.py from it first; see docs/ROBOT_SESSION_CHECKLIST.md)
+python -m experiments.yanshee_check --ip <IP>
+python -m experiments.yanshee_demo --profile reserved --ip <IP>
+```
+
+Yanshee is a 37 cm desktop robot, so distances are scaled by 1/3 onto a table
+(zones at 15, 30 and 50 cm). If the sensor pack is missing, `--operator` takes the
+distance zone and touch from the keyboard. The YanAPI function names marked
+unverified in `src/yanshee_robot.py` are confirmed in the robot session.
+
+## Going from laptop to robot (original NAO plan)
 
 The RL code never imports a concrete robot. To run on a (virtual or real) NAO,
 change one line in the experiment:
@@ -128,9 +159,11 @@ Each method shows the exact NAOqi proxy call that belongs there.
 Done: the robot-agnostic architecture, tabular Q-learning on the greeting MDP, the scripted
 baseline, and the multi-user personalization study above.
 
-Not done, and out of scope for this project: running on a virtual or real NAO
-(`NaoRobot` is a documented stub), a user study with human participants, and subjective
-measures such as the Godspeed questionnaire.
+Added for the demo: the Yanshee port (`YansheeRobot`), tested against a fake robot;
+the YanAPI function names are confirmed in the robot session.
+
+Not done, and out of scope for this project: learning on the robot itself, a user study
+with human participants, and subjective measures such as the Godspeed questionnaire.
 
 ## Key references
 
