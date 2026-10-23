@@ -1,1 +1,3 @@
 numpy>=1.24
+matplotlib>=3.7   # figures (--plots)
+pytest>=7         # tests
