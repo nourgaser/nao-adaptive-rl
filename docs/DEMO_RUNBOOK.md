@@ -10,7 +10,7 @@ spot, and so nothing shown depends on a number being regenerated live.
 ## Before the room
 
 ```bash
-cd seminar/project
+cd nao-adaptive-rl
 python -m pytest tests -q          # 15 tests, ~1 s — proves it is not a mock
 ls results/                        # three figures should already exist
 ```

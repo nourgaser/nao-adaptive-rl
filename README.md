@@ -7,6 +7,16 @@ Adaptation in HRI.
 
 **Authors:** Nour Gaser, Eman Saleh
 
+## Seminar documents
+
+| | |
+|---|---|
+| Presentation (as delivered) | [`presentation/presentation.pdf`](presentation/presentation.pdf), source in `presentation/main.tex` |
+| Report (as submitted, 31 July 2026) | [`report/report.pdf`](report/report.pdf) |
+| Project abstract | [`abstract/abstract.pdf`](abstract/abstract.pdf) |
+| Demo script | [`docs/DEMO_RUNBOOK.md`](docs/DEMO_RUNBOOK.md) |
+| Result figures | [`results/`](results/) |
+
 ---
 
 ## What this is
@@ -75,22 +85,28 @@ from the head-touch and presence signals.
 
 ```
 nao-adaptive-rl/
-├── README.md
-├── LICENSE
-├── requirements.txt
+├── presentation/                 # seminar deck: LaTeX source, figures, PDF
+├── report/                       # submitted report (PDF)
+├── abstract/                     # one-page project abstract
 ├── docs/
-│   └── architecture.md          # the layered design + NAOqi mapping
+│   ├── DEMO_RUNBOOK.md           # step-by-step script for the live demo
+│   └── architecture.md           # the layered design + NAOqi mapping
 ├── src/
 │   ├── robot_interface.py        # abstract contract (the key seam)
 │   ├── mock_robot.py             # laptop impl + simulated person
+│   ├── user_profile.py           # hidden comfort preferences of the simulated users
 │   ├── nao_robot.py              # real-NAO impl (NAOqi stub, documented)
-│   ├── envs/
-│   │   └── greeting_env.py       # Gym-style greeting/proxemics MDP
-│   └── agents/
-│       └── q_learning.py         # tabular Q-learning
-└── experiments/
-    └── train_greeting.py         # runs the full loop; reports convergence
+│   ├── envs/greeting_env.py      # Gym-style greeting/proxemics MDP
+│   └── agents/q_learning.py      # tabular Q-learning
+├── experiments/
+│   ├── personalization.py        # main study: one policy vs one per user, warm-start
+│   └── train_greeting.py         # single-user warm-up
+├── tests/                        # unit tests
+└── results/                      # figures written by personalization.py --plots
 ```
+
+The table above reproduces exactly with `python -m experiments.personalization --seeds 8`
+(the default is 5 seeds, which gives slightly different numbers).
 
 ## Going from laptop to robot
 
@@ -107,15 +123,14 @@ robot = NaoRobot(ip="<robot-ip>")        # everything else is unchanged
 prototyping environment, and the campus robot version is still to be confirmed).
 Each method shows the exact NAOqi proxy call that belongs there.
 
-## Roadmap
+## Status and next steps
 
-- [x] Robot-agnostic architecture + hardware abstraction layer
-- [x] Tabular Q-learning converging on the illustrative greeting MDP (laptop)
-- [x] Scripted baseline for comparison
-- [ ] **Decide the experiment with the committee**
-- [ ] Move to a virtual NAO (Choregraphe / Webots)
-- [ ] Confirm campus NAO version + hardware access; fine-tune on the real robot
-- [ ] Within-subject user study; combine objective metrics + Godspeed questionnaire
+Done: the robot-agnostic architecture, tabular Q-learning on the greeting MDP, the scripted
+baseline, and the multi-user personalization study above.
+
+Not done, and out of scope for this project: running on a virtual or real NAO
+(`NaoRobot` is a documented stub), a user study with human participants, and subjective
+measures such as the Godspeed questionnaire.
 
 ## Key references
 
