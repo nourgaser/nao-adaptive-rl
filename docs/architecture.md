@@ -25,13 +25,16 @@ laptop today and move to a (virtual or real) NAO later with a one-line change.
             +--------------------------------------------------+
                    ^                  ^                   ^
                    |                  |                   |
-        +------------------+  +----------------+  +-------------------+
-        | MockRobot        |  | (Webots /      |  | NaoRobot          |
-        | laptop + a       |  |  Choregraphe   |  | real NAO via      |
-        | simulated person |  |  virtual NAO)  |  | the NAOqi SDK     |
-        +------------------+  +----------------+  +-------------------+
-           runs today          drop-in next        one-line swap later
+        +------------------+  +-------------------+  +-------------------+
+        | MockRobot        |  | YansheeRobot      |  | NaoRobot          |
+        | laptop + a       |  | UBTECH Yanshee    |  | real NAO via      |
+        | simulated person |  | via YanAPI        |  | the NAOqi SDK     |
+        +------------------+  +-------------------+  +-------------------+
+           training            the demo robot         original plan (stub)
 ```
+
+The NAO was the original target; the robot available for the demo is a Yanshee,
+so `YansheeRobot` was added and `NaoRobot` stays as a documented stub.
 
 ## Why this shape
 
@@ -56,6 +59,22 @@ laptop today and move to a (virtual or real) NAO later with a one-line change.
 | `sense().distance`    | `ALMemory` ultrasonic keys (`.../US/Left|Right/...`)    |
 | `sense().touch`       | `ALMemory` head-tactile keys (`FrontTactilTouched` ...) |
 | `sense().present`     | `ALFaceDetection`                                       |
+
+## Mapping to YanAPI (Yanshee, the demo robot)
+
+| Interface method      | YanAPI call (see `CALLS` in `src/yanshee_robot.py`)      |
+|-----------------------|----------------------------------------------------------|
+| `say(text)`           | `sync_do_tts(text, True)`                                 |
+| `perform("closer")`   | `sync_play_motion(name="walk", direction="forward")`      |
+| `perform("back")`     | `sync_play_motion(name="walk", direction="backward")`     |
+| `perform("intensity_*")` | `set_robot_volume(...)`, a gesture, and a spoken greeting |
+| `sense().distance`    | `get_sensors_infrared_value()`, scaled by 1/3 to a tabletop |
+| `sense().touch`       | touch sensor (name confirmed in the robot session)       |
+| `sense().present`     | infrared reads nobody within 1.2 m                       |
+
+Two things differ from the simulation. The robot cannot re-home itself, so the
+operator places it at the start of each interaction. And it will not walk closer
+than about 10 cm, where the simulation simply clamps the distance.
 
 ## Reusing the skeleton for other experiments
 
